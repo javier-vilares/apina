@@ -106,6 +106,12 @@ export class ApinaConfig {
             const elementSerializer = this.lookupSerializer(elementType);
             return arraySerializer(elementSerializer);
         }
+
+        const dictionaryMatched = /Dictionary<(.+)>/.exec(type);
+        if (dictionaryMatched) {
+            return dictionarySerializer(this.lookupSerializer(dictionaryMatched[1]));
+        }
+
         const serializer = this.serializers[type];
         if (serializer) {
             return serializer;
@@ -129,6 +135,29 @@ function arraySerializer(elementSerializer: Serializer): Serializer {
         },
         deserialize(value) {
             return safeMap(value, elementSerializer.deserialize.bind(elementSerializer));
+        }
+    }
+}
+
+function dictionarySerializer(valueSerializer: Serializer): Serializer {
+    function safeMap(dictionary: Dictionary<any>, mapper: (a: any) => any) {
+        if (!dictionary)
+            return dictionary;
+        else {
+            const result: any = {}
+            for (const [key, value] of Object.entries(dictionary)) {
+                result[key] = mapper(value)
+            }
+            return result
+        }
+    }
+
+    return {
+        serialize(value) {
+            return safeMap(value, valueSerializer.serialize.bind(valueSerializer));
+        },
+        deserialize(value) {
+            return safeMap(value, valueSerializer.deserialize.bind(valueSerializer));
         }
     }
 }
