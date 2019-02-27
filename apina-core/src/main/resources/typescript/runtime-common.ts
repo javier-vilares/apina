@@ -3,15 +3,18 @@ export class ApinaConfig {
     /** Prefix added for all API calls */
     baseUrl: string = "";
 
-    private serializers: SerializerMap = {
-        any: identitySerializer,
-        string: identitySerializer,
-        number: identitySerializer,
-        boolean: identitySerializer
+    private serializers: SerializerFactoryMap = {
+        any: (_env: TypeEnvironment) => identitySerializer,
+        string: (_env: TypeEnvironment) => identitySerializer,
+        number: (_env: TypeEnvironment) => identitySerializer,
+        boolean: (_env: TypeEnvironment) => identitySerializer
     };
+
+    private parameterizedSerializers: ParameterizedSerializerFactoryMap = {};
 
     constructor() {
         registerDefaultSerializers(this);
+        this.registerSerializerFactory('Array<V>', (env: TypeEnvironment) => this.arraySerializer(env));
     }
 
     serialize(value: any, type: string): any {
@@ -22,8 +25,18 @@ export class ApinaConfig {
         return this.lookupSerializer(type).deserialize(value);
     }
 
+    registerSerializerFactory(name: string, serializerFactory: SerializerFactory) {
+        const {baseType, args} = parseType(name);
+
+        if (args.length === 0) {
+            this.serializers[name] = serializerFactory;
+        } else {
+            this.parameterizedSerializers[baseType] = {serializerFactory: serializerFactory, typeArgs: args};
+        }
+    }
+
     registerSerializer(name: string, serializer: Serializer) {
-        this.serializers[name] = serializer;
+        this.registerSerializerFactory(name, (_env: TypeEnvironment) => serializer);
     }
 
     registerEnumSerializer(name: string, enumObject: any) {
@@ -31,14 +44,64 @@ export class ApinaConfig {
     }
 
     registerClassSerializer(name: string, fields: any) {
-        this.registerSerializer(name, this.classSerializer(fields));
+        this.registerSerializerFactory(name, (env: TypeEnvironment) => this.classSerializer(fields, env));
     }
 
     registerIdentitySerializer(name: string) {
         this.registerSerializer(name, identitySerializer);
     }
 
-    private classSerializer(fields: any): Serializer {
+    private lookupParameterizedSerializer(type: string): Serializer | null {
+
+        const {baseType, args} = parseType(type);
+        const serializerFactoryWithTypes = this.parameterizedSerializers[baseType];
+
+        if (!serializerFactoryWithTypes) {
+            return null;
+        }
+
+        const {serializerFactory, typeArgs} = serializerFactoryWithTypes;
+
+        const env: TypeEnvironment = {};
+
+        for (let i = 0; i < typeArgs.length; i++) {
+            env[typeArgs[i]] = args[i];
+        }
+
+        return {
+            serialize(o: any): any {
+                return serializerFactory(env).serialize(o)
+            },
+            deserialize(o: any): any {
+                return serializerFactory(env).deserialize(o)
+            }
+        }
+    }
+
+    private lookupSerializer(type: string): Serializer {
+        if (!type) throw new Error("no type given");
+
+        if (type.indexOf('[]', type.length - 2) !== -1) { // type.endsWith('[]')
+            const elementType = type.substring(0, type.length - 2);
+            return this.lookupParameterizedSerializer(`Array<${elementType}>`)
+        }
+
+        const serializerFactory = this.serializers[type];
+
+        if (serializerFactory) {
+            return serializerFactory({});
+        }
+
+        const parameterizedSerializer = this.lookupParameterizedSerializer(type);
+
+        if (parameterizedSerializer) {
+            return parameterizedSerializer;
+        } else {
+            throw new Error(`could not find serializer for type '${type}'`);
+        }
+    }
+
+    private classSerializer(fields: any, env: TypeEnvironment): Serializer {
         function mapProperties(obj: any, propertyMapper: (value: any, type: string) => any) {
             if (obj === null || obj === undefined) {
                 return obj;
@@ -57,8 +120,14 @@ export class ApinaConfig {
             return result;
         }
 
-        const serialize = this.serialize.bind(this);
-        const deserialize = this.deserialize.bind(this);
+        const serialize = (value: any, type: string) => {
+            return this.lookupSerializer(substituteEnvironment(type, env)).serialize(value);
+        };
+
+        const deserialize = (value: any, type: string) => {
+            return this.lookupSerializer(substituteEnvironment(type, env)).deserialize(value);
+        };
+
         return {
             serialize(obj) {
                 return mapProperties(obj, serialize);
@@ -69,40 +138,33 @@ export class ApinaConfig {
         };
     }
 
-    private lookupSerializer(type: string): Serializer {
-        if (!type) throw new Error("no type given");
-
-        if (type.indexOf('[]', type.length - 2) !== -1) { // type.endsWith('[]')
-            const elementType = type.substring(0, type.length - 2);
-            const elementSerializer = this.lookupSerializer(elementType);
-            return arraySerializer(elementSerializer);
+    private arraySerializer(env: TypeEnvironment): Serializer {
+        function safeMap(value: any[], mapper: (a: any) => any) {
+            if (!value)
+                return value;
+            else
+                return value.map(mapper);
         }
-        const serializer = this.serializers[type];
-        if (serializer) {
-            return serializer;
-        } else {
-            throw new Error(`could not find serializer for type '${type}'`);
-        }
-    }
-}
 
-function arraySerializer(elementSerializer: Serializer): Serializer {
-    function safeMap(value: any[], mapper: (a: any) => any) {
-        if (!value)
-            return value;
-        else
-            return value.map(mapper);
-    }
+        const serialize = (value: any) => {
+            return this.lookupSerializer(env['V']).serialize(value);
+        };
 
-    return {
-        serialize(value) {
-            return safeMap(value, elementSerializer.serialize.bind(elementSerializer));
-        },
-        deserialize(value) {
-            return safeMap(value, elementSerializer.deserialize.bind(elementSerializer));
+        const deserialize = (value: any) => {
+            return this.lookupSerializer(env['V']).deserialize(value);
+        };
+
+        return {
+            serialize(value) {
+                return safeMap(value, serialize);
+            },
+            deserialize(value) {
+                return safeMap(value, deserialize);
+            }
         }
     }
 }
+
 
 export interface RequestData {
     uriTemplate: string;
@@ -113,9 +175,15 @@ export interface RequestData {
     responseType?: string;
 }
 
+type TypeEnvironment = { [type: string]: string }
+
 export interface Serializer {
     serialize(o: any): any;
     deserialize(o: any): any;
+}
+
+export interface SerializerFactory {
+    (env: TypeEnvironment): Serializer;
 }
 
 const identitySerializer: Serializer = {
@@ -126,6 +194,40 @@ const identitySerializer: Serializer = {
         return o;
     }
 };
+
+function substituteEnvironment(type: string, env: TypeEnvironment): string {
+    let resultType = type;
+
+    for (const [genericType, substitutionType] of Object.entries(env)) {
+
+        if (resultType === genericType) {
+            resultType = substitutionType
+        }
+
+        resultType = resultType.replace('<' + genericType + '>', '<' + substitutionType + '>');
+
+        if (resultType.endsWith('[]')) {
+            const arrayType = type.substring(0, type.indexOf('[]'));
+            resultType = (env[arrayType] || arrayType) + '[]';
+        }
+    }
+
+    return resultType;
+}
+
+function parseType(type: string): { baseType: string, args: string[] } {
+
+    const start = type.indexOf('<');
+
+    if (start !== -1) {
+        const baseType = type.substring(0, start);
+        const arg = type.substring(start + 1, type.indexOf('>'));
+
+        return { baseType, args: [arg] };
+    }
+
+    return { baseType: type, args: [] };
+}
 
 function enumSerializer(enumObject: any): Serializer {
     return {
@@ -144,6 +246,11 @@ function enumSerializer(enumObject: any): Serializer {
     }
 }
 
-interface SerializerMap {
-    [name: string]: Serializer;
+interface SerializerFactoryMap {
+    [name: string]: SerializerFactory;
 }
+
+interface ParameterizedSerializerFactoryMap {
+    [baseName: string]: { serializerFactory: SerializerFactory, typeArgs: string[] }
+}
+

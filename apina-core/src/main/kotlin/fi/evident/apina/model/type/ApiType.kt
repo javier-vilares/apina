@@ -62,4 +62,20 @@ sealed class ApiType {
             val VOID: ApiType = Primitive("void")
         }
     }
+
+    class Variable(val name: String) : ApiType() {
+        override fun typeRepresentation() = name
+        override fun equals(other: Any?) = other is Variable && name == other.name
+        override fun hashCode() = name.hashCode()
+    }
+
+    class ParameterizedClass(val name: ApiTypeName, val arguments: List<ApiType>) : ApiType(), Comparable<ParameterizedClass> {
+        override fun typeRepresentation(): String {
+            val argumentsNames = arguments.map { it.typeRepresentation() }
+            return "$name<${argumentsNames.joinToString(",")}>"
+        }
+        override fun equals(other: Any?) = other is ParameterizedClass && name == other.name
+        override fun hashCode() = name.hashCode()
+        override fun compareTo(other: ParameterizedClass) = name.compareTo(other.name)
+    }
 }

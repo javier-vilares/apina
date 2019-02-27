@@ -1,9 +1,13 @@
 package fi.evident.apina.model
 
+import fi.evident.apina.model.type.ApiType
 import fi.evident.apina.model.type.ApiTypeName
 import java.util.*
 
-class ClassDefinition(val type: ApiTypeName) {
+class ClassDefinition(
+    val type: ApiTypeName,
+    val arguments: List<ApiType>
+) {
 
     private val _properties = TreeMap<String, PropertyDefinition>()
 
@@ -18,5 +22,11 @@ class ClassDefinition(val type: ApiTypeName) {
 
     fun hasProperty(name: String) = name in _properties
 
-    override fun toString() = type.toString()
+    override fun toString(): String {
+        return if (arguments.isEmpty()) {
+            type.toString()
+        } else {
+            "$type<${arguments.joinToString(",")}>"
+        }
+    }
 }

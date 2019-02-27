@@ -73,7 +73,7 @@ abstract class AbstractTypeScriptGenerator(
         out.writeLine()
 
         for (classDefinition in api.classDefinitions) {
-            out.writeExportedClass(classDefinition.type.toString()) {
+            out.writeExportedClass(classDefinition.toString()) {
                 for (property in classDefinition.properties)
                     out.writeLine("${property.name}: ${property.type};")
             }
@@ -121,7 +121,7 @@ abstract class AbstractTypeScriptGenerator(
                 for (property in classDefinition.properties)
                     defs[property.name] = typeDescriptor(property.type)
 
-                out.write("config.registerClassSerializer(").writeValue(classDefinition.type.toString()).write(", ")
+                out.write("config.registerClassSerializer(").writeValue(classDefinition.toString()).write(", ")
                 out.writeValue(defs).writeLine(");")
                 out.writeLine()
             }
