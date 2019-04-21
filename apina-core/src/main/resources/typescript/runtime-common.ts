@@ -129,12 +129,15 @@ function arraySerializer(elementSerializer: Serializer): Serializer {
             return value.map(mapper);
     }
 
+    const serialize = elementSerializer.serialize.bind(elementSerializer);
+    const deserialize = elementSerializer.deserialize.bind(elementSerializer);
+
     return {
         serialize(value) {
-            return safeMap(value, elementSerializer.serialize.bind(elementSerializer));
+            return safeMap(value, serialize);
         },
         deserialize(value) {
-            return safeMap(value, elementSerializer.deserialize.bind(elementSerializer));
+            return safeMap(value, deserialize);
         }
     }
 }
@@ -144,7 +147,7 @@ function dictionarySerializer(valueSerializer: Serializer): Serializer {
         if (!dictionary)
             return dictionary;
         else {
-            const result: any = {}
+            const result: any = {};
             for (const [key, value] of Object.entries(dictionary)) {
                 result[key] = mapper(value)
             }
@@ -152,12 +155,15 @@ function dictionarySerializer(valueSerializer: Serializer): Serializer {
         }
     }
 
+    const serialize = valueSerializer.serialize.bind(valueSerializer);
+    const deserialize = valueSerializer.deserialize.bind(valueSerializer);
+
     return {
         serialize(value) {
-            return safeMap(value, valueSerializer.serialize.bind(valueSerializer));
+            return safeMap(value, serialize);
         },
         deserialize(value) {
-            return safeMap(value, valueSerializer.deserialize.bind(valueSerializer));
+            return safeMap(value, deserialize);
         }
     }
 }
