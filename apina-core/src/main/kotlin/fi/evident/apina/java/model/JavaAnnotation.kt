@@ -32,12 +32,24 @@ class JavaAnnotation(val name: JavaType.Basic) {
     fun <T : Any> getAttribute(name: String, type: Class<T>): T? {
         val value = attributes[name] ?: return null
 
-        if (value.javaClass.isArray && !type.isArray) {
-            val length = ReflectArray.getLength(value)
-            if (length == 1)
-                return type.cast(ReflectArray.get(value, 0))
-            else
-                error("Expected single element for attribute '$name' of ${this.name}, but got $length")
+        if (value.javaClass.isArray) {
+            if (!type.isArray) {
+                val length = ReflectArray.getLength(value)
+                if (length == 1)
+                    return type.cast(ReflectArray.get(value, 0))
+                else
+                    error("Expected single element for attribute '$name' of ${this.name}, but got $length")
+
+            } else if (type.componentType != value.javaClass.componentType) {
+                // The bytecode might contain an array of objects, yet we want an array of strings out.
+                // Convert automatically as long as the element types agree.
+                val array = value as Array<*>
+                val newArray = ReflectArray.newInstance(type.componentType, array.size)
+                for (i in array.indices)
+                    ReflectArray.set(newArray, i, array[i])
+
+                return type.cast(newArray)
+            }
         }
 
         return type.cast(value)
