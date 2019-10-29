@@ -112,7 +112,7 @@ class SpringModelReader private constructor(private val classes: JavaModel, priv
         val classUrl = findRequestMappingPath(owningClass)
         val methodUrl = findRequestMappingPath(method)
 
-        val url = (classUrl + methodUrl).removePrefix(settings.removedUrlPrefix)
+        val url = (joinUrls(classUrl, methodUrl)).removePrefix(settings.removedUrlPrefix)
         return parseSpringUriTemplate(url)
     }
 
@@ -136,6 +136,9 @@ class SpringModelReader private constructor(private val classes: JavaModel, priv
 
         private val log = LoggerFactory.getLogger(SpringModelReader::class.java)
         val RESPONSE_WRAPPERS = listOf(HTTP_ENTITY, RESPONSE_ENTITY, CALLABLE)
+
+        private fun joinUrls(prefix: String, suffix: String) =
+            prefix.removeSuffix("/") + "/" + suffix.removePrefix("/")
 
         fun readApiDefinition(model: JavaModel, settings: TranslationSettings): ApiDefinition {
             val reader = SpringModelReader(model, settings)

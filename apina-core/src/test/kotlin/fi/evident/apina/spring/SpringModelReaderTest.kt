@@ -176,6 +176,66 @@ class SpringModelReaderTest {
         assertEquals(setOf("Foo", "Bar"), model.classDefinitions.map { it.type.name }.toSet())
     }
 
+    @Test
+    fun `normalize slashes without trailing controller slash`() {
+        @Suppress("unused")
+        @RestController
+        @RequestMapping("prefix")
+        class MyController {
+
+            @GetMapping("foo")
+            fun foo() = ""
+
+            @GetMapping("/bar")
+            fun bar() = ""
+
+            @GetMapping("baz/")
+            fun baz() = ""
+
+            @GetMapping("/quux/")
+            fun quux() = ""
+        }
+
+        val group = readModel<MyController>().endpointGroups.single()
+
+        assertEquals(4, group.endpoints.size)
+
+        assertEquals("/prefix/foo", group.endpointByName("foo").uriTemplate.toString())
+        assertEquals("/prefix/bar", group.endpointByName("bar").uriTemplate.toString())
+        assertEquals("/prefix/baz/", group.endpointByName("baz").uriTemplate.toString())
+        assertEquals("/prefix/quux/", group.endpointByName("quux").uriTemplate.toString())
+    }
+
+    @Test
+    fun `normalize slashes with trailing controller slash`() {
+        @Suppress("unused")
+        @RestController
+        @RequestMapping("/prefix/")
+        class MyController {
+
+            @GetMapping("foo")
+            fun foo() = ""
+
+            @GetMapping("/bar")
+            fun bar() = ""
+
+            @GetMapping("baz/")
+            fun baz() = ""
+
+            @GetMapping("/quux/")
+            fun quux() = ""
+        }
+
+        val group = readModel<MyController>().endpointGroups.single()
+
+        assertEquals(4, group.endpoints.size)
+
+        assertEquals("/prefix/foo", group.endpointByName("foo").uriTemplate.toString())
+        assertEquals("/prefix/bar", group.endpointByName("bar").uriTemplate.toString())
+        assertEquals("/prefix/baz/", group.endpointByName("baz").uriTemplate.toString())
+        assertEquals("/prefix/quux/", group.endpointByName("quux").uriTemplate.toString())
+    }
+
     private fun EndpointGroup.endpointByName(name: String): Endpoint =
         assertNotNull(endpoints.find { it.name == name })
 

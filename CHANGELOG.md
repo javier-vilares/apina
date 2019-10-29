@@ -1,3 +1,7 @@
+## Unreleased
+
+- Avoid duplicate slash characters when joining URL templates together.
+
 ## 0.12.4 (2019-09-25)
 
 - Support Jackson's @JsonUnwrapped ([#16](https://github.com/EvidentSolutions/apina/issues/16))
