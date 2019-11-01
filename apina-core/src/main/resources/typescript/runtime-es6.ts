@@ -13,7 +13,7 @@ export abstract class ApinaEndpointContext {
         return this.config.deserialize(value, type);
     }
 
-    protected buildUrl(uriTemplate: String, pathVariables: any): string {
+    buildUrl(uriTemplate: String, pathVariables: any): string {
         return this.config.baseUrl + uriTemplate.replace(/{([^}]+)}/g, (match, name) => pathVariables[name]);
     }
 }

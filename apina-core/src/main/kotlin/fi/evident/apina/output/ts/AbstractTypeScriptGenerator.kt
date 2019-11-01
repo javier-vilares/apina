@@ -189,6 +189,10 @@ abstract class AbstractTypeScriptGenerator(
                 for (endpoint in endpointGroup.endpoints) {
                     writeEndpoint(endpoint)
                     out.writeLine().writeLine()
+                    if (settings.generateURLs) {
+                        writeEndpointURL(endpoint)
+                        out.writeLine().writeLine()
+                    }
                 }
             }
         }
@@ -198,7 +202,16 @@ abstract class AbstractTypeScriptGenerator(
         endpointGroup.name + "Endpoint"
 
     private fun writeEndpoint(endpoint: Endpoint) {
-        out.write(endpointSignature(endpoint)).write(" ").writeBlock { out.write("return this.context.request(").writeValue(AbstractTypeScriptGenerator.createConfig(endpoint)).writeLine(");") }
+        out.write(endpointSignature(endpoint)).write(" ").writeBlock { out.write("return this.context.request(").writeValue(
+            createConfig(endpoint)
+        ).writeLine(");") }
+    }
+
+    private fun writeEndpointURL(endpoint: Endpoint) {
+        val config= createConfig(endpoint)
+        out.write(endpointURLSignature(endpoint)).write(" ").writeBlock { out.write("return this.context.buildUrl(")
+            .writeValue(config["uriTemplate"]).write(" , ").writeValue(config["pathVariables"])
+            .writeLine(");") }
     }
 
     private fun endpointSignature(endpoint: Endpoint): String {
@@ -207,6 +220,14 @@ abstract class AbstractTypeScriptGenerator(
         val resultType = endpoint.responseBody?.let { qualifiedTypeName(it) } ?: "void"
 
         return format("%s(%s): %s<%s>", name, parameters, resultFunctor, resultType)
+    }
+
+    private fun endpointURLSignature(endpoint: Endpoint): String {
+        val name = endpoint.name + "URL"
+        val parameters = parameterListCode(endpoint.parameters)
+        val resultType = "string"
+
+        return format("%s(%s): %s", name, parameters, resultType)
     }
 
     private fun qualifiedTypeName(type: ApiType): String = when {
