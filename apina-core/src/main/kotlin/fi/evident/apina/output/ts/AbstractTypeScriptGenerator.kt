@@ -81,7 +81,10 @@ abstract class AbstractTypeScriptGenerator(
         for (classDefinition in api.classDefinitions) {
             classDefinitionWriter(classDefinition.type.name) {
                 for (property in classDefinition.properties)
-                    out.writeLine("${property.name}: ${property.type.toTypeScript()};")
+                    if (settings.typeWriteMode == TypeWriteMode.INTERFACE)
+                        out.writeLine("${property.name}?: ${property.type.toTypeScript()};")
+                    else
+                        out.writeLine("${property.name}: ${property.type.toTypeScript()};")
             }
         }
 
@@ -189,8 +192,8 @@ abstract class AbstractTypeScriptGenerator(
                 for (endpoint in endpointGroup.endpoints) {
                     writeEndpoint(endpoint)
                     out.writeLine().writeLine()
-                    if (settings.generateURLs) {
-                        writeEndpointURL(endpoint)
+                    if (settings.generateUrls) {
+                        writeEndpointUrl(endpoint)
                         out.writeLine().writeLine()
                     }
                 }
@@ -207,9 +210,9 @@ abstract class AbstractTypeScriptGenerator(
         ).writeLine(");") }
     }
 
-    private fun writeEndpointURL(endpoint: Endpoint) {
+    private fun writeEndpointUrl(endpoint: Endpoint) {
         val config= createConfig(endpoint)
-        out.write(endpointURLSignature(endpoint)).write(" ").writeBlock { out.write("return this.context.buildUrl(")
+        out.write(endpointUrlSignature(endpoint)).write(" ").writeBlock { out.write("return this.context.buildUrl(")
             .writeValue(config["uriTemplate"]).write(" , ").writeValue(config["pathVariables"])
             .writeLine(");") }
     }
@@ -222,8 +225,8 @@ abstract class AbstractTypeScriptGenerator(
         return format("%s(%s): %s<%s>", name, parameters, resultFunctor, resultType)
     }
 
-    private fun endpointURLSignature(endpoint: Endpoint): String {
-        val name = endpoint.name + "URL"
+    private fun endpointUrlSignature(endpoint: Endpoint): String {
+        val name = endpoint.name + "Url"
         val parameters = parameterListCode(endpoint.parameters)
         val resultType = "string"
 

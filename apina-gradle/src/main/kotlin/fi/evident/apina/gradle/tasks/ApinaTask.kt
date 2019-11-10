@@ -51,7 +51,7 @@ open class ApinaTask : DefaultTask() {
     var removedUrlPrefix = ""
 
     @get:Input
-    var generateURLs = false
+    var generateUrls = false
 
     init {
         description = "Generates TypeScript client code from Spring controllers and Jackson classes"
@@ -80,7 +80,7 @@ open class ApinaTask : DefaultTask() {
             processor.settings.removedUrlPrefix = removedUrlPrefix
             processor.settings.platform = platform
             processor.settings.typeWriteMode = typeWriteMode
-            processor.settings.generateURLs = generateURLs
+            processor.settings.generateUrls = generateUrls
 
             endpoints.forEach { processor.settings.addControllerPattern(it) }
 
