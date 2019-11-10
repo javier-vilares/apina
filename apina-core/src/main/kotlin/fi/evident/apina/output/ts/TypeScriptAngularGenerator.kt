@@ -7,7 +7,8 @@ import fi.evident.apina.utils.readResourceAsString
 /**
  * Generates Angular TypeScript code for client side.
  */
-class TypeScriptAngularGenerator(api: ApiDefinition, settings: TranslationSettings) : AbstractTypeScriptGenerator(api, settings, "Observable", "@Injectable()") {
+class TypeScriptAngularGenerator(api: ApiDefinition, settings: TranslationSettings) : AbstractTypeScriptGenerator(api, settings,
+    "Observable", "@Injectable( {providedIn: 'root'} )") {
 
     override fun writeRuntime() {
         out.write(readResourceAsString("typescript/runtime-angular.ts"))
@@ -32,9 +33,6 @@ class TypeScriptAngularGenerator(api: ApiDefinition, settings: TranslationSettin
         out.writeLine("@NgModule({")
         out.writeLine("    imports: [HttpClientModule],")
         out.writeLine("    providers: [")
-
-        for (endpointGroup in api.endpointGroups)
-            out.writeLine("        " + endpointClassName(endpointGroup) + ",")
 
         out.writeLine("        { provide: ApinaEndpointContext, useClass: DefaultApinaEndpointContext },")
         out.writeLine("        { provide: ApinaConfig, useFactory: apinaConfigFactory }")
