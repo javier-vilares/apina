@@ -17,7 +17,7 @@ class TranslationSettings {
     var typeWriteMode = TypeWriteMode.CLASS
     var enumMode = EnumMode.DEFAULT
     var removedUrlPrefix = ""
-    var generateURLs = false
+    var generateUrls = false
 
 
     fun isBlackBoxClass(name: String) = name in blackBoxClasses
