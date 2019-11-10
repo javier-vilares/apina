@@ -18,8 +18,8 @@ configure<VersionConfig> {
 }
 
 configure(allprojects) {
-    group = "fi.evident.apina"
-    this.version = rootProject.scmVersion.version
+    group = "es.enxenio.apina"
+    this.version = "0.13.0"
 
     repositories {
         jcenter()
@@ -56,6 +56,5 @@ tasks.register("publish") {
     description = "Publishes all artifacts"
 
     dependsOn(tasks.findByPath(":apina-gradle:publishPlugins"))
-    dependsOn(tasks.findByPath(":apina-core:bintrayUpload"))
-    dependsOn(tasks.findByPath(":manual:publishGhPages"))
+    dependsOn(tasks.findByPath(":apina-core:publish"))
 }
