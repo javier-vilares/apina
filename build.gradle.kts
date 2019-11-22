@@ -19,7 +19,7 @@ configure<VersionConfig> {
 
 configure(allprojects) {
     group = "es.enxenio.apina"
-    this.version = "0.13.0"
+    this.version = "1.0.0"
 
     repositories {
         jcenter()
