@@ -101,6 +101,10 @@ class SpringModelReader private constructor(private val classes: JavaModel, priv
         if (requestParam != null)
             return EndpointRequestParamParameter(name, requestParam.getAttribute("name"), type())
 
+        val isExtraRequestParam = parameter.type.toString() in settings.extraRequestParams
+        if (isExtraRequestParam)
+            return EndpointRequestParamParameter(name, null, type())
+
         val pathVariable = annotationResolver.findAnnotation(parameter, PATH_VARIABLE)
         if (pathVariable != null)
             return EndpointPathVariableParameter(name, pathVariable.getAttribute("name"), type())

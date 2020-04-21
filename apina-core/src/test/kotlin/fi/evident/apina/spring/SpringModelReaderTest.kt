@@ -158,22 +158,25 @@ class SpringModelReaderTest {
     }
 
     @Test
-    fun `extra arguments are not added to model`() {
+    fun `extra arguments are not added to model unless explicitly configured`() {
 
         class Foo
         class Bar
         class Baz
+        class Fum
 
         @RestController
         class MyController {
 
             @Suppress("unused")
             @RequestMapping("/foo")
-            fun foo(@RequestBody foo: Foo, @RequestParam bar: Bar, baz: Baz) {}
+            fun foo(@RequestBody foo: Foo, @RequestParam bar: Bar, baz: Baz, fum: Fum) {}
         }
 
-        val model = readModel(MyController::class, Foo::class, Bar::class, Baz::class)
-        assertEquals(setOf("Foo", "Bar"), model.classDefinitions.map { it.type.name }.toSet())
+        settings.extraRequestParams.addPattern(".+Fum")
+
+        val model = readModel(MyController::class, Foo::class, Bar::class, Fum::class)
+        assertEquals(setOf("Foo", "Bar", "Fum"), model.classDefinitions.map { it.type.name }.toSet())
     }
 
     private fun EndpointGroup.endpointByName(name: String): Endpoint =
