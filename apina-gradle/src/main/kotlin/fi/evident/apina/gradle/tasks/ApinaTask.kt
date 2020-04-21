@@ -33,6 +33,9 @@ open class ApinaTask : DefaultTask() {
     var blackBoxClasses: List<String> = ArrayList()
 
     @get:Input
+    var extraRequestParams: List<String> = ArrayList()
+
+    @get:Input
     var endpoints: List<String> = ArrayList()
 
     @get:Input
@@ -82,6 +85,9 @@ open class ApinaTask : DefaultTask() {
 
             for (pattern in blackBoxClasses)
                 processor.settings.blackBoxClasses.addPattern(pattern)
+
+            for (pattern in extraRequestParams)
+                processor.settings.extraRequestParams.addPattern(pattern)
 
             for ((key, value) in imports)
                 processor.settings.addImport(key, value)

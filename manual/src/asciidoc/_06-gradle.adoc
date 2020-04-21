@@ -35,6 +35,9 @@ tasks.apina {
     // to work behind reverse proxies. Defaults to empty string (URL is not modified).
     removedUrlPrefix = "/foo"
 
+    // Which classes to include as query parameters even if they don't have a @RequestParam annotation.
+    extraRequestParams = [".+Foo,", """my\.package\.bar\.Bar"""]
+
     // Code generation target (Default is 'ANGULAR')
     // - 'ANGULAR' => Generate Angular module that uses Angular's HttpClient
     // - 'ES6' => Generate code that uses Fetch API and has no dependencies apart from ES6
