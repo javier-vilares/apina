@@ -81,10 +81,7 @@ abstract class AbstractTypeScriptGenerator(
         for (classDefinition in api.classDefinitions) {
             classDefinitionWriter(classDefinition.type.name) {
                 for (property in classDefinition.properties)
-                    if (settings.typeWriteMode == TypeWriteMode.INTERFACE)
-                        out.writeLine("${property.name}?: ${property.type.toTypeScript()};")
-                    else
-                        out.writeLine("${property.name}: ${property.type.toTypeScript()};")
+                    out.writeLine("${property.name}: ${property.type.toTypeScript()};")
             }
         }
 
