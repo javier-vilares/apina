@@ -45,7 +45,7 @@ open class ApinaTask : DefaultTask() {
     var platform = Platform.ANGULAR
 
     @get:Input
-    var typeWriteMode = TypeWriteMode.CLASS
+    var typeWriteMode = TypeWriteMode.INTERFACE
 
     @get:Input
     var enumMode = EnumMode.DEFAULT

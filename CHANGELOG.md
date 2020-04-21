@@ -1,3 +1,27 @@
+## Unreleased
+
+- Find subclasses of sealed Kotlin classes without using `@JsonSubTypes`.
+
+## 0.13.3 (2020-04-14)
+
+- Consult the field corresponding to a getter when considering ignore-annotations
+
+## 0.13.2 (2020-04-14)
+
+- Ignore properties marked with `java.beans.Transient` or `org.springframework.data.annotation.Transient`
+- Ignore transient fields, unless they have getters
+
+## 0.13.1 (2020-04-09)
+
+- Fix race condition regarding the creation of shadowJar ([#56](https://github.com/EvidentSolutions/apina/pull/56))
+- Fix empty response as null serialization ([#58](https://github.com/EvidentSolutions/apina/pull/58))
+
+## 0.13.0 (2020-01-18)
+
+### Breaking changes
+
+- Write generated data-types as interfaces instead of classes.
+
 ## 0.12.4 (2019-09-25)
 
 - Support Jackson's @JsonUnwrapped ([#16](https://github.com/EvidentSolutions/apina/issues/16))

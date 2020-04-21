@@ -2,7 +2,6 @@ package fi.evident.apina.cli
 
 import fi.evident.apina.model.settings.Platform
 import fi.evident.apina.model.settings.TypeWriteMode
-import java.util.*
 
 internal class CommandLineArguments {
 
@@ -11,7 +10,7 @@ internal class CommandLineArguments {
     val controllerPatterns = mutableListOf<String>()
     val imports = mutableListOf<ImportArgument>()
     var platform = Platform.ANGULAR
-    var typeWriteMode = TypeWriteMode.CLASS
+    var typeWriteMode = TypeWriteMode.INTERFACE
 
     private fun parse(arg: String) {
         // This could be more general, but this is all we need for now.
@@ -49,12 +48,12 @@ internal class CommandLineArguments {
             val types = anImport.substring(0, colonIndex).split(",".toRegex()).toTypedArray()
             val module = anImport.substring(colonIndex + 1)
 
-            imports.add(ImportArgument(Arrays.asList(*types), module))
+            imports.add(ImportArgument(types.asList(), module))
             return
         }
 
         if (arg.startsWith("--"))
-            throw java.lang.IllegalArgumentException("unknown argument $arg")
+            throw IllegalArgumentException("unknown argument $arg")
 
         files.add(arg)
     }

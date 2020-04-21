@@ -1,5 +1,7 @@
 package fi.evident.apina.java.model.type
 
+import kotlin.reflect.KClass
+
 /**
  * Base class for all Java types, like [java.lang.reflect.Type].
  */
@@ -9,6 +11,9 @@ sealed class JavaType {
         throw ClassCastException("can't cast ${javaClass.name} to JavaType.Basic")
 
     abstract val nonGenericClassName: String
+
+    val packageName: String
+        get() = packageNameForClassName(nonGenericClassName)
 
     abstract fun resolve(env: TypeEnvironment): JavaType
 
@@ -28,6 +33,8 @@ sealed class JavaType {
 
     companion object {
         inline fun <reified T : Any> basic() = Basic(T::class.java)
+
+        fun packageNameForClassName(className: String) = className.substringBeforeLast('.', "")
     }
 
     /**
@@ -36,6 +43,8 @@ sealed class JavaType {
     data class Basic(val name: String) : JavaType() {
 
         constructor(cl: Class<*>) : this(cl.name)
+
+        constructor(cl: KClass<*>) : this(cl.java)
 
         override val nonGenericClassName: String
             get() = name
